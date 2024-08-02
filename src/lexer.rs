@@ -1,5 +1,4 @@
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Number(i32),
     Plus,
@@ -74,7 +73,9 @@ impl<'a> Lexer<'a> {
                             }
                         }
                     }
+                    panic!("Expected \"print\", found: `{:?}`", self.current_char);
                 }
+                // whitespace
                 ' ' | '\t' | '\n' | '\r' => {
                     self.advance();
                     continue;
@@ -88,7 +89,7 @@ impl<'a> Lexer<'a> {
     fn number(&mut self) -> Token {
         let mut result = String::new();
         while let Some(c) = self.current_char {
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 result.push(c);
                 self.advance();
             } else {
