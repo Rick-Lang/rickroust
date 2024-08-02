@@ -9,3 +9,9 @@ edition = "2021"
 git = "https://github.com/TheDan64/inkwell"
 branch = "master"
 features = ["llvm16-0"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
