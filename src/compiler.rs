@@ -1,3 +1,5 @@
+use std::fmt::Result;
+
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::ExecutionEngine;
@@ -39,12 +41,30 @@ impl<'ctx> Compiler<'ctx> {
                 let rhs = self.compile(right).unwrap().into_int_value();
 
                 match op {
-                    Token::Plus => Some(self.builder.build_int_add(lhs, rhs, "tmpadd").into()),
-                    Token::Minus => Some(self.builder.build_int_sub(lhs, rhs, "tmpsub").into()),
-                    Token::Star => Some(self.builder.build_int_mul(lhs, rhs, "tmpmul").into()),
-                    Token::Slash => {
-                        Some(self.builder.build_int_signed_div(lhs, rhs, "tmpdiv").into())
-                    }
+                    Token::Plus => Some(
+                        self.builder
+                            .build_int_add(lhs, rhs, "tmpadd")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Token::Minus => Some(
+                        self.builder
+                            .build_int_sub(lhs, rhs, "tmpsub")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Token::Star => Some(
+                        self.builder
+                            .build_int_mul(lhs, rhs, "tmpmul")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Token::Slash => Some(
+                        self.builder
+                            .build_int_signed_div(lhs, rhs, "tmpdiv")
+                            .unwrap()
+                            .into(),
+                    ),
                     _ => panic!("Unexpected binary operator"),
                 }
             }
@@ -60,9 +80,10 @@ impl<'ctx> Compiler<'ctx> {
                 self.builder
                     .build_call(
                         printf,
-                        &[format_str.as_pointer_value().into(), value.into()],
+                        &[format_str.unwrap().as_pointer_value().into(), value.into()],
                         "printf_call",
                     )
+                    .unwrap()
                     .try_as_basic_value()
                     .left()
             }

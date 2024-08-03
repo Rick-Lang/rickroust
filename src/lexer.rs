@@ -35,7 +35,7 @@ impl<'a> Lexer<'a> {
             match c {
                 '0'..='9' => {
                     return match self.number() {
-                        Some(n) => Ok(n),
+                        Ok(n) => Ok(n),
                         _ => Err(format!("Expected digit, found: `{:?}`", self.current_char)),
                     }
                 }
@@ -94,7 +94,7 @@ impl<'a> Lexer<'a> {
         Ok(Token::EOF)
     }
 
-    fn number(&mut self) -> Option<Token> {
+    fn number(&mut self) -> Result<Token, std::num::ParseIntError> {
         let mut result = String::new();
         while let Some(c) = self.current_char {
             if !c.is_ascii_digit() {
@@ -108,6 +108,12 @@ impl<'a> Lexer<'a> {
             result.push(c);
             self.advance();
         }
-        result.parse::<i32>().ok().map(Token::Number)
+        // https://doc.rust-lang.org/reference/types/function-item
+        result.parse::<i32>().map(Token::Number)
+        // "
+        // I hate to say this, but
+        // this black-magic reminds me of JS:
+        // https://stackoverflow.com/questions/19357978/indirect-eval-call-in-strict-mode
+        // " - Rudxain
     }
 }
