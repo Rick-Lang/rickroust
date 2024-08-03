@@ -11,7 +11,7 @@ branch = "master"
 features = ["llvm16-0"]
 
 [profile.release]
-strip = true
-lto = true
-codegen-units = 1
 panic = "abort"
+strip = true
+lto = "thin"
+codegen-units = 1
