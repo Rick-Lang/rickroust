@@ -1,7 +1,7 @@
+mod compiler;
+mod interpreter;
 mod lexer;
 mod parser;
-// mod compiler;
-mod interpreter;
 
 use std::io::{self, Write};
 
@@ -41,7 +41,7 @@ fn main() {
     compiler.create_main_function();
     compiler.compile(&ast);
     compiler.finish_main_function();
-    
+
 
     // Print the LLVM IR
     module.print_to_stderr();
