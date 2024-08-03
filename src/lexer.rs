@@ -30,33 +30,38 @@ impl<'a> Lexer<'a> {
         self.current_char = self.input.next();
     }
 
-    pub fn get_next_token(&mut self) -> Token {
+    pub fn get_next_token(&mut self) -> Result<Token, String> {
         while let Some(c) = self.current_char {
             match c {
-                '0'..='9' => return self.number(),
+                '0'..='9' => {
+                    return match self.number() {
+                        Some(n) => Ok(n),
+                        _ => Err(format!("Expected digit, found: `{:?}`", self.current_char)),
+                    }
+                }
                 '+' => {
                     self.advance();
-                    return Token::Plus;
+                    return Ok(Token::Plus);
                 }
                 '-' => {
                     self.advance();
-                    return Token::Minus;
+                    return Ok(Token::Minus);
                 }
                 '*' => {
                     self.advance();
-                    return Token::Star;
+                    return Ok(Token::Star);
                 }
                 '/' => {
                     self.advance();
-                    return Token::Slash;
+                    return Ok(Token::Slash);
                 }
                 '(' => {
                     self.advance();
-                    return Token::LParen;
+                    return Ok(Token::LParen);
                 }
                 ')' => {
                     self.advance();
-                    return Token::RParen;
+                    return Ok(Token::RParen);
                 }
                 'p' => {
                     self.advance();
@@ -68,34 +73,41 @@ impl<'a> Lexer<'a> {
                                 self.advance();
                                 if self.current_char == Some('t') {
                                     self.advance();
-                                    return Token::Print;
+                                    return Ok(Token::Print);
                                 }
                             }
                         }
                     }
-                    panic!("Expected \"print\", found: `{:?}`", self.current_char);
+                    return Err(format!(
+                        "Expected \"print\", found: `{:?}`",
+                        self.current_char
+                    ));
                 }
                 // whitespace
                 ' ' | '\t' | '\n' | '\r' => {
                     self.advance();
                     continue;
                 }
-                _ => panic!("Unexpected character: {}", c),
+                _ => return Err(format!("Unexpected character: {}", c)),
             }
         }
-        Token::EOF
+        Ok(Token::EOF)
     }
 
-    fn number(&mut self) -> Token {
+    fn number(&mut self) -> Option<Token> {
         let mut result = String::new();
         while let Some(c) = self.current_char {
-            if c.is_ascii_digit() {
-                result.push(c);
-                self.advance();
-            } else {
+            if !c.is_ascii_digit() {
                 break;
             }
+            // Order is irrelevant,
+            // but (potentially) allocating first
+            // is a "fail-fast" strategy.
+            // So the program only invests time doing stuff,
+            // if there's enough memory
+            result.push(c);
+            self.advance();
         }
-        Token::Number(result.parse::<i32>().unwrap())
+        result.parse::<i32>().ok().map(Token::Number)
     }
 }
