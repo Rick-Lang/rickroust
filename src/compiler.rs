@@ -1,5 +1,3 @@
-use std::fmt::Result;
-
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::ExecutionEngine;
