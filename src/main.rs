@@ -1,14 +1,14 @@
+mod compiler;
+mod interpreter;
 mod lexer;
 mod parser;
-// mod compiler;
-mod interpreter;
 
 use std::io::{self, Write};
 
 // use inkwell::context::Context;
 // use inkwell::targets::{InitializationConfig, Target};
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     /*
     Target::initialize_all(&InitializationConfig::default());
 
@@ -25,15 +25,16 @@ fn main() {
 
     // Read the input
     print!(">>>");
-    io::stdout().flush().unwrap();
+    // should this be a REPL?
+    io::stdout().flush()?;
 
     let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
+    io::stdin().read_line(&mut input)?;
 
     // Tokenize and parse the input
     let lexer = lexer::Lexer::new(&input);
-    let mut parser = parser::Parser::new(lexer);
-    let ast = parser.parse();
+    let mut parser = parser::Parser::new(lexer)?;
+    let ast = parser.parse()?;
 
     /*
     // Compile the AST to LLVM IR
@@ -41,7 +42,7 @@ fn main() {
     compiler.create_main_function();
     compiler.compile(&ast);
     compiler.finish_main_function();
-    
+
 
     // Print the LLVM IR
     module.print_to_stderr();
@@ -55,4 +56,5 @@ fn main() {
     // Interpret the AST
     let mut interpreter = interpreter::Interpreter::new();
     interpreter.interpret(&ast);
+    Ok(())
 }

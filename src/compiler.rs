@@ -1,11 +1,11 @@
-use inkwell::context::Context;
 use inkwell::builder::Builder;
+use inkwell::context::Context;
 use inkwell::execution_engine::ExecutionEngine;
 use inkwell::module::Module;
 use inkwell::values::{BasicValueEnum, FunctionValue};
 
-use crate::parser::AST;
 use crate::lexer::Token;
+use crate::parser::AST;
 
 pub struct Compiler<'ctx> {
     context: &'ctx Context,
@@ -34,14 +34,35 @@ impl<'ctx> Compiler<'ctx> {
     pub fn compile(&mut self, node: &AST) -> Option<BasicValueEnum<'ctx>> {
         match node {
             AST::BinOp(left, op, right) => {
+                // should we replace `unwrap` by `?`
                 let lhs = self.compile(left).unwrap().into_int_value();
                 let rhs = self.compile(right).unwrap().into_int_value();
 
                 match op {
-                    Token::Plus => Some(self.builder.build_int_add(lhs, rhs, "tmpadd").into()),
-                    Token::Minus => Some(self.builder.build_int_sub(lhs, rhs, "tmpsub").into()),
-                    Token::Star => Some(self.builder.build_int_mul(lhs, rhs, "tmpmul").into()),
-                    Token::Slash => Some(self.builder.build_int_signed_div(lhs, rhs, "tmpdiv").into()),
+                    Token::Plus => Some(
+                        self.builder
+                            .build_int_add(lhs, rhs, "tmpadd")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Token::Minus => Some(
+                        self.builder
+                            .build_int_sub(lhs, rhs, "tmpsub")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Token::Star => Some(
+                        self.builder
+                            .build_int_mul(lhs, rhs, "tmpmul")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Token::Slash => Some(
+                        self.builder
+                            .build_int_signed_div(lhs, rhs, "tmpdiv")
+                            .unwrap()
+                            .into(),
+                    ),
                     _ => panic!("Unexpected binary operator"),
                 }
             }
@@ -57,9 +78,10 @@ impl<'ctx> Compiler<'ctx> {
                 self.builder
                     .build_call(
                         printf,
-                        &[format_str.as_pointer_value().into(), value.into()],
+                        &[format_str.unwrap().as_pointer_value().into(), value.into()],
                         "printf_call",
                     )
+                    .unwrap()
                     .try_as_basic_value()
                     .left()
             }
@@ -77,6 +99,7 @@ impl<'ctx> Compiler<'ctx> {
     }
 
     pub fn finish_main_function(&self) {
-        self.builder.build_return(Some(&self.context.i32_type().const_int(0, false)));
+        self.builder
+            .build_return(Some(&self.context.i32_type().const_int(0, false)));
     }
 }

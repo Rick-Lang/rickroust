@@ -1,5 +1,4 @@
-#[derive(Debug)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Number(i32),
     Plus,
@@ -31,33 +30,38 @@ impl<'a> Lexer<'a> {
         self.current_char = self.input.next();
     }
 
-    pub fn get_next_token(&mut self) -> Token {
+    pub fn get_next_token(&mut self) -> Result<Token, String> {
         while let Some(c) = self.current_char {
             match c {
-                '0'..='9' => return self.number(),
+                '0'..='9' => {
+                    return match self.number() {
+                        Ok(n) => Ok(n),
+                        _ => Err(format!("Expected digit, found: `{:?}`", self.current_char)),
+                    }
+                }
                 '+' => {
                     self.advance();
-                    return Token::Plus;
+                    return Ok(Token::Plus);
                 }
                 '-' => {
                     self.advance();
-                    return Token::Minus;
+                    return Ok(Token::Minus);
                 }
                 '*' => {
                     self.advance();
-                    return Token::Star;
+                    return Ok(Token::Star);
                 }
                 '/' => {
                     self.advance();
-                    return Token::Slash;
+                    return Ok(Token::Slash);
                 }
                 '(' => {
                     self.advance();
-                    return Token::LParen;
+                    return Ok(Token::LParen);
                 }
                 ')' => {
                     self.advance();
-                    return Token::RParen;
+                    return Ok(Token::RParen);
                 }
                 'p' => {
                     self.advance();
@@ -69,32 +73,47 @@ impl<'a> Lexer<'a> {
                                 self.advance();
                                 if self.current_char == Some('t') {
                                     self.advance();
-                                    return Token::Print;
+                                    return Ok(Token::Print);
                                 }
                             }
                         }
                     }
+                    return Err(format!(
+                        "Expected \"print\", found: `{:?}`",
+                        self.current_char
+                    ));
                 }
+                // whitespace
                 ' ' | '\t' | '\n' | '\r' => {
                     self.advance();
                     continue;
                 }
-                _ => panic!("Unexpected character: {}", c),
+                _ => return Err(format!("Unexpected character: {}", c)),
             }
         }
-        Token::EOF
+        Ok(Token::EOF)
     }
 
-    fn number(&mut self) -> Token {
+    fn number(&mut self) -> Result<Token, std::num::ParseIntError> {
         let mut result = String::new();
         while let Some(c) = self.current_char {
-            if c.is_digit(10) {
-                result.push(c);
-                self.advance();
-            } else {
+            if !c.is_ascii_digit() {
                 break;
             }
+            // Order is irrelevant,
+            // but (potentially) allocating first
+            // is a "fail-fast" strategy.
+            // So the program only invests time doing stuff,
+            // if there's enough memory
+            result.push(c);
+            self.advance();
         }
-        Token::Number(result.parse::<i32>().unwrap())
+        // https://doc.rust-lang.org/reference/types/function-item
+        result.parse::<i32>().map(Token::Number)
+        // "
+        // I hate to say this, but
+        // this black-magic reminds me of JS:
+        // https://stackoverflow.com/questions/19357978/indirect-eval-call-in-strict-mode
+        // " - Rudxain
     }
 }
